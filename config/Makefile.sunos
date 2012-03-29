@@ -1,0 +1,16 @@
+OBJ=o
+BUILDDIR=build/sunos
+CC=cc
+ORIGINREL=..
+LIBDIR=lib
+TESTDIR=test
+OBJDIR=obj
+SPRO_FLAGS=-g -errhdr=%user -errfmt=error -errshort=full -errtags -mt=yes -v \
+           -D_XOPEN_SOURCE=600 -xc99=all
+SO_COMPILE=$(COMPILE.c) $(INCLUDE_PATH) $(SPRO_FLAGS) $(LIBRARY_CFLAGS) -KPIC \
+           -xldscope=hidden
+SO_LINK=$(LINK.c) -G
+COMPILE=$(COMPILE.c) $(INCLUDE_PATH) $(SPRO_FLAGS) $(LIBRARY_CFLAGS)
+EXE_LINK=$(LINK.c) -R\$$ORIGIN/$(ORIGINREL)/$(LIBDIR):$(PREFIX)/lib
+
+include config/Makefile

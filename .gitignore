@@ -1,0 +1,12 @@
+# Keep the entries sorted to reduce the risk for a merge conflict
+*.[ao]
+*.dll
+*.exe
+*.exp
+*.lib
+*.obj
+*~
+/build/
+/vc100.idb
+/vc100.pdb
+core*
