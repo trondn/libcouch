@@ -63,16 +63,6 @@ tests_test_get_deleted_document_LDFLAGS = libcouch.la
 tests_test_bulk_store_documents_SOURCES = tests/testapp.c
 tests_test_bulk_store_documents_LDFLAGS = libcouch.la
 
-VALGRIND=valgrind
-VALGRIND_OPTIONS=--tool=Memcheck --num-callers=50  --leak-check=full\
-                 --error-limit=yes --track-origins=yes --malloc-fill=55 \
-                 --free-fill=aa --dsymutil=yes -q
-
-valgrind:
-	./tests/test_store_single_document
-
-#	for f in $(TESTS); do $(VALGRIND) $(VALGRIND_OPTIONS) --log-file=$$f.log $$f; done
-
 LINTFLAGS=-Iinclude -b -c -errchk=%all \
           -erroff=E_INCL_NUSD,E_CAST_INT_TO_SMALL_INT,E_PTRDIFF_OVERFLOW  \
           -errtags=yes -errhdr=%user \
