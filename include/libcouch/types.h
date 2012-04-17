@@ -30,10 +30,10 @@ extern "C" {
 #endif
 
     struct libcouch_st;
-    typedef struct libcouch_st* libcouch_t;
+    typedef struct libcouch_st *libcouch_t;
 
     struct libcouch_document_st;
-    typedef struct libcouch_document_st* libcouch_document_t;
+    typedef struct libcouch_document_st *libcouch_document_t;
 
     typedef enum {
         COUCH_OPEN_RDONLY,
@@ -47,12 +47,12 @@ extern "C" {
         COUCH_ERROR_EINVAL,
         COUCH_ERROR_INTERNAL,
         COUCH_ERROR_OPEN_FILE,
-        COUCH_ERROR_PARSE_TERM,
+        COUCH_ERROR_CORRUPT,
         COUCH_ERROR_ENOENT,
         COUCH_ERROR_NO_HEADER,
         COUCH_ERROR_HEADER_VERSION,
         COUCH_ERROR_CHECKSUM_FAIL
-    } libcouch_error_t;
+    } couch_error_t;
 
 #ifdef __cplusplus
 }

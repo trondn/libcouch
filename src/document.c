@@ -23,31 +23,53 @@
 LIBCOUCH_API
 void couch_document_release(libcouch_document_t doc)
 {
-    if (doc->info != NULL) {
-        couchstore_free_docinfo(doc->info);
-    }
-    if (doc->doc) {
-        couchstore_free_document(doc->doc);
-    }
-    free(doc->tmp_alloc_id);
-    free(doc->tmp_alloc_meta);
-    free(doc->tmp_alloc_bp);
+    couch_document_reinitialize(doc);
     free(doc);
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_create_empty_document(libcouch_document_t *doc)
+couch_error_t couch_create_empty_document(libcouch_t handle,
+                                          libcouch_document_t *doc)
 {
     libcouch_document_t ret = calloc(1, sizeof(*ret));
+    (void)handle;
     *doc = ret;
-    return (*doc == NULL) ? COUCH_ERROR_ENOMEM : COUCH_SUCCESS;
+    if (*doc != NULL) {
+        ret->scratch = 1;
+        return COUCH_SUCCESS;
+    }
+
+    return COUCH_ERROR_ENOMEM;
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_id(libcouch_document_t doc,
-                                       const void *id,
-                                       size_t nid,
-                                       int allocate)
+void couch_document_reinitialize(libcouch_document_t doc)
+{
+    if (doc->scratch == 1) {
+        free(doc->info);
+        free(doc->doc);
+    } else {
+        if (doc->info != NULL) {
+            couchstore_free_docinfo(doc->info);
+        }
+        if (doc->doc) {
+            couchstore_free_document(doc->doc);
+        }
+    }
+    free(doc->tmp_alloc_id);
+    free(doc->tmp_alloc_meta);
+    free(doc->tmp_alloc_bp);
+
+    doc->info = NULL;
+    doc->doc = NULL;
+    doc->tmp_alloc_id = doc->tmp_alloc_meta = doc->tmp_alloc_bp;
+}
+
+LIBCOUCH_API
+couch_error_t couch_document_set_id(libcouch_document_t doc,
+                                    const void *id,
+                                    size_t nid,
+                                    int allocate)
 {
     /* The couchstore API got the const wrong here.. */
     void *ptr = (void *)id;
@@ -81,10 +103,10 @@ libcouch_error_t couch_document_set_id(libcouch_document_t doc,
 
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_meta(libcouch_document_t doc,
-                                         const void *meta,
-                                         size_t nmeta,
-                                         int allocate)
+couch_error_t couch_document_set_meta(libcouch_document_t doc,
+                                      const void *meta,
+                                      size_t nmeta,
+                                      int allocate)
 {
     /* The couchstore API got the const wrong here.. */
     void *ptr = (void *)meta;
@@ -111,7 +133,7 @@ libcouch_error_t couch_document_set_meta(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_revision(libcouch_document_t doc, uint64_t revno)
+couch_error_t couch_document_set_revision(libcouch_document_t doc, uint64_t revno)
 {
     assert(doc);
 
@@ -126,7 +148,7 @@ libcouch_error_t couch_document_set_revision(libcouch_document_t doc, uint64_t r
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_deleted(libcouch_document_t doc, int deleted)
+couch_error_t couch_document_set_deleted(libcouch_document_t doc, int deleted)
 {
     assert(doc);
 
@@ -141,10 +163,10 @@ libcouch_error_t couch_document_set_deleted(libcouch_document_t doc, int deleted
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_value(libcouch_document_t doc,
-                                          const void *value,
-                                          size_t nvalue,
-                                          int allocate)
+couch_error_t couch_document_set_value(libcouch_document_t doc,
+                                       const void *value,
+                                       size_t nvalue,
+                                       int allocate)
 {
     /* The couchstore API got the const wrong here.. */
     void *ptr = (void *)value;
@@ -177,8 +199,8 @@ libcouch_error_t couch_document_set_value(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_set_content_type(libcouch_document_t doc,
-                                                 uint8_t content_type)
+couch_error_t couch_document_set_content_type(libcouch_document_t doc,
+                                              uint8_t content_type)
 {
     assert(doc);
 
@@ -194,9 +216,9 @@ libcouch_error_t couch_document_set_content_type(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_id(libcouch_document_t doc,
-                                       const void **id,
-                                       size_t *nid)
+couch_error_t couch_document_get_id(libcouch_document_t doc,
+                                    const void **id,
+                                    size_t *nid)
 {
     if (doc == NULL || (doc->doc == NULL && doc->info == NULL)) {
         return COUCH_ERROR_EINVAL;
@@ -214,9 +236,9 @@ libcouch_error_t couch_document_get_id(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_meta(libcouch_document_t doc,
-                                         const void **meta,
-                                         size_t *nmeta)
+couch_error_t couch_document_get_meta(libcouch_document_t doc,
+                                      const void **meta,
+                                      size_t *nmeta)
 {
     if (doc == NULL || doc->info == NULL) {
         return COUCH_ERROR_EINVAL;
@@ -229,7 +251,7 @@ libcouch_error_t couch_document_get_meta(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_revision(libcouch_document_t doc, uint64_t *revno)
+couch_error_t couch_document_get_revision(libcouch_document_t doc, uint64_t *revno)
 {
     if (doc == NULL || doc->info == NULL) {
         return COUCH_ERROR_EINVAL;
@@ -240,7 +262,7 @@ libcouch_error_t couch_document_get_revision(libcouch_document_t doc, uint64_t *
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_deleted(libcouch_document_t doc, int *deleted)
+couch_error_t couch_document_get_deleted(libcouch_document_t doc, int *deleted)
 {
     if (doc == NULL || doc->info == NULL) {
         return COUCH_ERROR_EINVAL;
@@ -251,9 +273,9 @@ libcouch_error_t couch_document_get_deleted(libcouch_document_t doc, int *delete
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_value(libcouch_document_t doc,
-                                          const void **value,
-                                          size_t *nvalue)
+couch_error_t couch_document_get_value(libcouch_document_t doc,
+                                       const void **value,
+                                       size_t *nvalue)
 {
     if (doc == NULL || doc->doc == NULL) {
         return COUCH_ERROR_EINVAL;
@@ -266,8 +288,8 @@ libcouch_error_t couch_document_get_value(libcouch_document_t doc,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_document_get_content_type(libcouch_document_t doc,
-                                                 uint8_t *content_type)
+couch_error_t couch_document_get_content_type(libcouch_document_t doc,
+                                              uint8_t *content_type)
 {
     if (doc == NULL || doc->info == NULL) {
         return COUCH_ERROR_EINVAL;

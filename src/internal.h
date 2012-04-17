@@ -40,8 +40,9 @@ struct libcouch_document_st {
     void *tmp_alloc_id;
     void *tmp_alloc_meta;
     void *tmp_alloc_bp;
+    int scratch;
 };
 
-libcouch_error_t couch_remap_error(couchstore_error_t in);
+couch_error_t couch_remap_error(couchstore_error_t in);
 
 #endif

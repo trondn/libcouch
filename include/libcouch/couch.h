@@ -27,9 +27,9 @@ extern "C" {
 #endif
 
     LIBCOUCH_API
-    libcouch_error_t couch_open_handle(const char *name,
-                                       libcouch_open_mode_t mode,
-                                       libcouch_t *handle);
+    couch_error_t couch_open_handle(const char *name,
+                                    libcouch_open_mode_t mode,
+                                    libcouch_t *handle);
 
     /**
      * couch_close_handle release all allocated resources for the handle
@@ -39,91 +39,102 @@ extern "C" {
     void couch_close_handle(libcouch_t handle);
 
     LIBCOUCH_API
-    libcouch_error_t couch_create_empty_document(libcouch_document_t *doc);
+    couch_error_t couch_create_empty_document(libcouch_t handle,
+                                              libcouch_document_t *doc);
+
+    /**
+     * This is a helper function to avoid having to call
+     * couch_document_release() followed by
+     * couch_create_empty_document(). Please note that you can
+     * <b>not</b> call couch_document_reinitialize() on a document
+     * returned from couch_get_document() (that have undefined behaviour,
+     * but will most likely crash your process)
+     */
+    LIBCOUCH_API
+    void couch_document_reinitialize(libcouch_document_t doc);
+
+    LIBCOUCH_API
+    couch_error_t couch_document_set_id(libcouch_document_t doc,
+                                        const void *id,
+                                        size_t nid,
+                                        int allocate);
+
+    LIBCOUCH_API
+    couch_error_t couch_document_set_meta(libcouch_document_t doc,
+                                          const void *meta,
+                                          size_t nmeta,
+                                          int allocate);
 
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_set_id(libcouch_document_t doc,
-                                           const void *id,
-                                           size_t nid,
+    couch_error_t couch_document_set_revision(libcouch_document_t doc, uint64_t revno);
+
+
+    LIBCOUCH_API
+    couch_error_t couch_document_set_deleted(libcouch_document_t doc, int deleted);
+
+    LIBCOUCH_API
+    couch_error_t couch_document_set_value(libcouch_document_t doc,
+                                           const void *value,
+                                           size_t nvalue,
                                            int allocate);
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_set_meta(libcouch_document_t doc,
-                                             const void *meta,
-                                             size_t nmeta,
-                                             int allocate);
+    couch_error_t couch_document_set_content_type(libcouch_document_t doc,
+                                                  uint8_t content_type);
 
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_set_revision(libcouch_document_t doc, uint64_t revno);
+    couch_error_t couch_document_get_id(libcouch_document_t doc,
+                                        const void **id,
+                                        size_t *nid);
+
+    LIBCOUCH_API
+    couch_error_t couch_document_get_meta(libcouch_document_t doc,
+                                          const void **meta,
+                                          size_t *nmeta);
 
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_set_deleted(libcouch_document_t doc, int deleted);
-
-    LIBCOUCH_API
-    libcouch_error_t couch_document_set_value(libcouch_document_t doc,
-                                              const void *value,
-                                              size_t nvalue,
-                                              int allocate);
-
-    LIBCOUCH_API
-    libcouch_error_t couch_document_set_content_type(libcouch_document_t doc,
-                                                     uint8_t content_type);
+    couch_error_t couch_document_get_revision(libcouch_document_t doc,
+                                              uint64_t *revno);
 
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_get_id(libcouch_document_t doc,
-                                           const void ** id,
-                                           size_t * nid);
+    couch_error_t couch_document_get_deleted(libcouch_document_t doc, int *deleted);
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_get_meta(libcouch_document_t doc,
-                                             const void ** meta,
-                                             size_t * nmeta);
-
-
-    LIBCOUCH_API
-    libcouch_error_t couch_document_get_revision(libcouch_document_t doc,
-                                                 uint64_t *revno);
-
+    couch_error_t couch_document_get_value(libcouch_document_t doc,
+                                           const void **value,
+                                           size_t *nvalue);
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_get_deleted(libcouch_document_t doc, int *deleted);
+    couch_error_t couch_document_get_content_type(libcouch_document_t doc,
+                                                  uint8_t *content_type);
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_get_value(libcouch_document_t doc,
-                                              const void ** value,
-                                              size_t * nvalue);
+    couch_error_t couch_get_document(libcouch_t handle,
+                                     const void *id,
+                                     size_t nid,
+                                     libcouch_document_t *doc);
 
     LIBCOUCH_API
-    libcouch_error_t couch_document_get_content_type(libcouch_document_t doc,
-                                                     uint8_t *content_type);
+    couch_error_t couch_store_document(libcouch_t handle,
+                                       libcouch_document_t doc);
 
     LIBCOUCH_API
-    libcouch_error_t couch_get_document(libcouch_t handle,
-                                        const void *id,
-                                        size_t nid,
-                                        libcouch_document_t *doc);
-
-    LIBCOUCH_API
-    libcouch_error_t couch_store_document(libcouch_t handle,
-                                          libcouch_document_t doc);
-
-    LIBCOUCH_API
-    libcouch_error_t couch_store_documents(libcouch_t handle,
-                                           libcouch_document_t *doc,
-                                           size_t ndocs);
+    couch_error_t couch_store_documents(libcouch_t handle,
+                                        libcouch_document_t *doc,
+                                        size_t ndocs);
 
     LIBCOUCH_API
     void couch_document_release(libcouch_document_t doc);
 
     LIBCOUCH_API
-    libcouch_error_t couch_commit(libcouch_t handle);
+    couch_error_t couch_commit(libcouch_t handle);
 
     LIBCOUCH_API
-    const char *couch_strerror(libcouch_error_t err);
+    const char *couch_strerror(couch_error_t err);
 
 #ifdef __cplusplus
 }

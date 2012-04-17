@@ -18,11 +18,10 @@
 
 #include <stdlib.h>
 
-
 LIBCOUCH_API
-libcouch_error_t couch_open_handle(const char *name,
-                                   libcouch_open_mode_t mode,
-                                   libcouch_t *handle)
+couch_error_t couch_open_handle(const char *name,
+                                libcouch_open_mode_t mode,
+                                libcouch_t *handle)
 {
     couchstore_error_t err;
     uint64_t flags;
@@ -62,10 +61,10 @@ void couch_close_handle(libcouch_t handle)
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_get_document(libcouch_t handle,
-                                    const void *id,
-                                    size_t nid,
-                                    libcouch_document_t *doc)
+couch_error_t couch_get_document(libcouch_t handle,
+                                 const void *id,
+                                 size_t nid,
+                                 libcouch_document_t *doc)
 {
     libcouch_document_t ret = calloc(1, sizeof(*ret));
     couchstore_error_t err;
@@ -85,6 +84,9 @@ libcouch_error_t couch_get_document(libcouch_t handle,
                                            &ret->doc, 0);
     if (err != COUCHSTORE_SUCCESS || ret->info->deleted) {
         couch_document_release(ret);
+        if (err == COUCHSTORE_SUCCESS) {
+            return COUCH_ERROR_ENOENT;
+        }
         return couch_remap_error(err);
     }
 
@@ -93,16 +95,16 @@ libcouch_error_t couch_get_document(libcouch_t handle,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_store_document(libcouch_t handle,
-                                      libcouch_document_t doc)
+couch_error_t couch_store_document(libcouch_t handle,
+                                   libcouch_document_t doc)
 {
     return couch_store_documents(handle, &doc, 1);
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_store_documents(libcouch_t handle,
-                                       libcouch_document_t *doc,
-                                       size_t ndocs)
+couch_error_t couch_store_documents(libcouch_t handle,
+                                    libcouch_document_t *doc,
+                                    size_t ndocs)
 {
     Doc **docs;
     DocInfo **info;
@@ -113,8 +115,8 @@ libcouch_error_t couch_store_documents(libcouch_t handle,
         return COUCH_ERROR_EINVAL;
     }
 
-    docs = calloc(ndocs, sizeof(Doc*));
-    info = calloc(ndocs, sizeof(DocInfo*));
+    docs = calloc(ndocs, sizeof(Doc *));
+    info = calloc(ndocs, sizeof(DocInfo *));
     if (docs == NULL || info == NULL) {
         free(docs);
         free(info);
@@ -135,7 +137,7 @@ libcouch_error_t couch_store_documents(libcouch_t handle,
 }
 
 LIBCOUCH_API
-libcouch_error_t couch_commit(libcouch_t handle)
+couch_error_t couch_commit(libcouch_t handle)
 {
     if (handle->mode == COUCH_OPEN_RDONLY) {
         return COUCH_ERROR_EINVAL;

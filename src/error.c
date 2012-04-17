@@ -20,21 +20,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-libcouch_error_t couch_remap_error(couchstore_error_t in)
+couch_error_t couch_remap_error(couchstore_error_t in)
 {
     switch (in) {
-    case COUCHSTORE_SUCCESS: return COUCH_SUCCESS;
-    case COUCHSTORE_ERROR_OPEN_FILE: return COUCH_ERROR_OPEN_FILE;
-    case COUCHSTORE_ERROR_PARSE_TERM: return COUCH_ERROR_PARSE_TERM;
-    case COUCHSTORE_ERROR_ALLOC_FAIL: return COUCH_ERROR_ENOMEM;
-    case COUCHSTORE_ERROR_READ: return COUCH_ERROR_EIO;
-    case COUCHSTORE_ERROR_DOC_NOT_FOUND: return COUCH_ERROR_ENOENT;
-    case COUCHSTORE_ERROR_NO_HEADER: return COUCH_ERROR_NO_HEADER;
-    case COUCHSTORE_ERROR_WRITE: return COUCH_ERROR_EIO;
-    case COUCHSTORE_ERROR_HEADER_VERSION: return COUCH_ERROR_HEADER_VERSION;
-    case COUCHSTORE_ERROR_CHECKSUM_FAIL: return COUCH_ERROR_CHECKSUM_FAIL;
-    case COUCHSTORE_ERROR_INVALID_ARGUMENTS: return COUCH_ERROR_EINVAL;
-    case COUCHSTORE_ERROR_NO_SUCH_FILE: return COUCH_ERROR_ENOENT;
+    case COUCHSTORE_SUCCESS:
+        return COUCH_SUCCESS;
+    case COUCHSTORE_ERROR_OPEN_FILE:
+        return COUCH_ERROR_OPEN_FILE;
+    case COUCHSTORE_ERROR_CORRUPT:
+        return COUCH_ERROR_CORRUPT;
+    case COUCHSTORE_ERROR_ALLOC_FAIL:
+        return COUCH_ERROR_ENOMEM;
+    case COUCHSTORE_ERROR_READ:
+        return COUCH_ERROR_EIO;
+    case COUCHSTORE_ERROR_DOC_NOT_FOUND:
+        return COUCH_ERROR_ENOENT;
+    case COUCHSTORE_ERROR_NO_HEADER:
+        return COUCH_ERROR_NO_HEADER;
+    case COUCHSTORE_ERROR_WRITE:
+        return COUCH_ERROR_EIO;
+    case COUCHSTORE_ERROR_HEADER_VERSION:
+        return COUCH_ERROR_HEADER_VERSION;
+    case COUCHSTORE_ERROR_CHECKSUM_FAIL:
+        return COUCH_ERROR_CHECKSUM_FAIL;
+    case COUCHSTORE_ERROR_INVALID_ARGUMENTS:
+        return COUCH_ERROR_EINVAL;
+    case COUCHSTORE_ERROR_NO_SUCH_FILE:
+        return COUCH_ERROR_ENOENT;
     default:
         return COUCH_ERROR_INTERNAL;
 
@@ -42,7 +54,7 @@ libcouch_error_t couch_remap_error(couchstore_error_t in)
 }
 
 LIBCOUCH_API
-const char *couch_strerror(libcouch_error_t err)
+const char *couch_strerror(couch_error_t err)
 {
     switch (err) {
     case COUCH_SUCCESS:
@@ -55,8 +67,8 @@ const char *couch_strerror(libcouch_error_t err)
         return "invalid arguments";
     case COUCH_ERROR_OPEN_FILE:
         return "failed to open file";
-    case COUCH_ERROR_PARSE_TERM:
-        return "failed to parse term";
+    case COUCH_ERROR_CORRUPT:
+        return "file corrupt";
     case COUCH_ERROR_ENOENT:
         return "no entry";
     case COUCH_ERROR_NO_HEADER:
