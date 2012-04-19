@@ -390,9 +390,10 @@ static int create_random_doc(libcouch_t handle, int idx, libcouch_document_t *do
     return 0;
 }
 
+const int maxdoc = 100000;
+
 static int bulk_store_documents(void)
 {
-    const int maxdoc = 100000;
     const int chunksize = 1000;
 
     couch_error_t err;
@@ -407,21 +408,33 @@ static int bulk_store_documents(void)
     libcouch_t handle;
 
     err = couch_open_handle(dbfile, COUCH_OPEN_RW, &handle);
+    if (err != COUCH_SUCCESS) {
+        report("Failed to open handle \"%s\"",
+               couch_strerror(err));
+        return 1;
+    }
 
     srand(0);
 
     int total = 0;
     do {
         int currtx = random() % chunksize;
+
+        if (total + currtx > maxdoc) {
+            currtx = maxdoc - total;
+        }
+
         for (int ii = 0; ii < currtx; ++ii) {
             libcouch_document_t doc;
-            if (create_random_doc(handle, ii, &doc)) {
+            if (create_random_doc(handle, total + ii, &doc)) {
                 report("Failed to create a document");
                 return 1;
             }
             docs[ii] = doc;
         }
 
+        fprintf(stdout, "\rStoring %d of %d..", currtx, total);
+        fflush(stdout);
         err = couch_store_documents(handle, docs, currtx);
         if (err != COUCH_SUCCESS) {
             report("Failed to store document \"%s\"",
@@ -437,9 +450,83 @@ static int bulk_store_documents(void)
         }
     } while (total < maxdoc);
 
+    fprintf(stdout, "\r                                     \r");
+    for (int ii = 0; ii < maxdoc; ++ii) {
+        libcouch_document_t doc;
+        char id[20];
+        int len = snprintf(id, sizeof(id), "%d", ii);
+        fprintf(stdout, "\rVerify %d....", ii);
+        err = couch_get_document(handle, id, len, &doc);
+        if (err != COUCH_SUCCESS) {
+            report("Expected to find the document \"%s\", but I got \"%s\"",
+                   id, couch_strerror(err));
+            /* return 1; */
+        } else {
+            couch_document_release(doc);
+        }
+    }
+    fprintf(stdout, "\r                        \r");
+
     couch_close_handle(handle);
 
     free(docs);
+    return 0;
+}
+
+static int count_callback(libcouch_t handle, libcouch_document_t doc, void *ctx)
+{
+    (void)handle;
+    (void)doc;
+    int *count = ctx;
+    (*count)++;
+    return 0;
+}
+
+
+static int test_changes_since(void)
+{
+    libcouch_t handle;
+    couch_error_t err;
+    err = couch_open_handle(dbfile, COUCH_OPEN_RW, &handle);
+    if (err != COUCH_SUCCESS) {
+        report("Failed to open handle \"%s\"",
+               couch_strerror(err));
+        return 1;
+    }
+
+    uint64_t offset = (uint64_t)couch_get_header_position(handle);
+
+    fprintf(stderr, "Creating test database");
+    fflush(stderr);
+    if (bulk_store_documents() != 0) {
+        return 1;
+    }
+
+    fprintf(stderr, "\r                      \r");
+    fflush(stderr);
+
+    err = couch_open_handle(dbfile, COUCH_OPEN_RDONLY, &handle);
+    if (err != COUCH_SUCCESS) {
+        report("Failed to open handle \"%s\"",
+               couch_strerror(err));
+        return 1;
+    }
+
+    int total = 0;
+    err = couch_changes_since(handle, offset, count_callback, &total);
+    if (err != COUCH_SUCCESS) {
+        report("Failed to call couch_changes_since \"%s\"",
+               couch_strerror(err));
+        return 1;
+    }
+
+    if (total != maxdoc) {
+        report("changes since did not report all of the changes %d of %d",
+               total, maxdoc);
+        return 1;
+    }
+
+    couch_close_handle(handle);
     return 0;
 }
 
@@ -470,6 +557,7 @@ static struct test tests[] = {
     { .name = "test_delete_nonexistent_document", .func = delete_nonexistent_document },
     { .name = "test_get_deleted_document", .func = get_deleted_document },
     { .name = "test_bulk_store_documents", .func = bulk_store_documents },
+    { .name = "test_changes_since", .func = test_changes_since },
     { .name = NULL, .func = NULL }
 };
 

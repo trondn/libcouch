@@ -39,6 +39,10 @@ extern "C" {
     void couch_close_handle(libcouch_t handle);
 
     LIBCOUCH_API
+    off_t couch_get_header_position(libcouch_t handle);
+
+
+    LIBCOUCH_API
     couch_error_t couch_create_empty_document(libcouch_t handle,
                                               libcouch_document_t *doc);
 
@@ -135,6 +139,42 @@ extern "C" {
 
     LIBCOUCH_API
     const char *couch_strerror(couch_error_t err);
+
+
+
+
+    /**
+     * The callback function used by couch_changes_since() to iterate
+     * through the documents.
+     *
+     * The document automatically released if the callback
+     * returns 0. A non-zero return value will preserve the document
+     * for future use (should be freed with couch_document_release() by the
+     * caller)
+     *
+     * @param habdle the libcouch handle
+     * @param doc the current document
+     * @param ctx user context
+     * @return 0 or 1. See description above
+     */
+    typedef int (*couch_changes_callback_fn)(libcouch_t handle,
+                                             libcouch_document_t doc,
+                                             void *ctx);
+
+    /**
+     * Iterate through the changes since sequence number `since`.
+     *
+     * @param handle libcouch handle
+     * @param since the sequence number to start iterating from
+     * @param callback the callback function used to iterate over all changes
+     * @param ctx client context (passed to the callback)
+     * @return COUCH_SUCCESS upon success
+     */
+    LIBCOUCH_API
+    couch_error_t couch_changes_since(libcouch_t handle,
+                                      uint64_t since,
+                                      couch_changes_callback_fn callback,
+                                      void *ctx);
 
 #ifdef __cplusplus
 }

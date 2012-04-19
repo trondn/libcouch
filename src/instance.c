@@ -61,6 +61,12 @@ void couch_close_handle(libcouch_t handle)
 }
 
 LIBCOUCH_API
+off_t couch_get_header_position(libcouch_t handle)
+{
+    return (off_t)couchstore_get_header_position(handle->couchstore_handle);
+}
+
+LIBCOUCH_API
 couch_error_t couch_get_document(libcouch_t handle,
                                  const void *id,
                                  size_t nid,
@@ -143,4 +149,47 @@ couch_error_t couch_commit(libcouch_t handle)
         return COUCH_ERROR_EINVAL;
     }
     return couch_remap_error(couchstore_commit(handle->couchstore_handle));
+}
+
+struct couch_wrap_ctx {
+    couch_changes_callback_fn callback;
+    libcouch_t handle;
+    void *ctx;
+};
+
+static int couchstore_changes_callback(Db *db, DocInfo *docinfo, void *ctx)
+{
+    (void)db;
+    int ret = 0;
+    libcouch_document_t doc = calloc(1, sizeof(*doc));
+    if (doc) {
+        struct couch_wrap_ctx *uctx = ctx;
+        doc->info = docinfo;
+
+        ret = uctx->callback(uctx->handle, doc, uctx->ctx);
+        if (ret == 0) {
+            free(doc);
+        }
+    }
+
+    return ret;
+}
+
+LIBCOUCH_API
+couch_error_t couch_changes_since(libcouch_t handle,
+                                  uint64_t since,
+                                  couch_changes_callback_fn callback,
+                                  void *ctx)
+{
+    struct couch_wrap_ctx uctx = { .callback = callback,
+        .handle = handle,
+         .ctx = ctx
+    };
+    couchstore_error_t err;
+    err = couchstore_changes_since(handle->couchstore_handle,
+                                   since, 0,
+                                   couchstore_changes_callback,
+                                   &uctx);
+
+    return couch_remap_error(err);
 }
